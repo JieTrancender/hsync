@@ -23,7 +23,7 @@ var deployOnly = flag.Bool("deploy", false, "deploy all files for server.")
 
 func init() {
 	flag.Lookup("alsologtostderr").DefValue = "true"
-	flag.Set("alsologtostderr", "true")
+	_ = flag.Set("alsologtostderr", "true")
 
 	df := flag.Usage
 	flag.Usage = func() {
@@ -77,9 +77,16 @@ func main() {
 	} else {
 		client, err := hsync.NewHsyncClient(confName, *host)
 		if err != nil {
-			glog.Exitln("start hsync client failed:", err)
+			glog.Exitf("start hsync client failed: %v", err)
 		}
-		client.Connect()
-		client.Watch()
+		err = client.Connect()
+		if err != nil {
+			glog.Exitf("start hsync client failed: %v", err)
+		}
+
+		err = client.Watch()
+		if err != nil {
+			glog.Exitf("start hsync client failed: %v", err)
+		}
 	}
 }
