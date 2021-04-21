@@ -155,7 +155,7 @@ checkConnect:
 	if err != nil {
 		glog.Warningln("\n==============================================================")
 		glog.Warningln("Call", method, "failed,", err)
-		glog.Warningln("==============================================================\n")
+		glog.Warningln("================================================================")
 	} else {
 		timeout.Stop()
 	}
@@ -262,7 +262,7 @@ func (hc *HsyncClient) RemoteDel(name string) error {
 	if reply == 1 {
 		glog.Info(relPath, " Delete suc")
 	} else {
-		glog.Infof("Delete [%s] failed,err=", relPath, err)
+		glog.Infof("Delete [%s] failed, err: %s", relPath, err)
 	}
 	return err
 }

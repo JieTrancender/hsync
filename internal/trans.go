@@ -172,7 +172,7 @@ func (trans *Trans) CopyFile(arg *RpcArgs, result *int) error {
 		}
 		if !myFile.Stat.IsDir() && info != nil && info.IsDir() {
 			err = os.RemoveAll(fullName)
-			glog.Infoln("trans.CopyFile | removeAll (%s) exists and not dir,because source is dir,err=", err)
+			glog.Infof("trans.CopyFile | removeAll (%s) exists and not dir, because source is dir, err: %v", fullName, err)
 			if err != nil {
 				return err
 			}
