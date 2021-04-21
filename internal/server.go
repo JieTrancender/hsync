@@ -24,11 +24,17 @@ func NewHsyncServer(confName string) (*HsyncServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	checkDir(conf.Home, 0755)
+
+	err = checkDir(conf.Home, 0755)
+	if err != nil {
+		return nil, err
+	}
+
 	err = os.Chdir(conf.Home)
 	if err != nil {
 		return nil, err
 	}
+
 	pwd, _ := os.Getwd()
 	glog.Infoln("cwd:", pwd)
 	server := &HsyncServer{
@@ -41,7 +47,7 @@ func NewHsyncServer(confName string) (*HsyncServer, error) {
 
 func (server *HsyncServer) Start() {
 	trans := NewTrans(server)
-	rpc.Register(trans)
+	_ = rpc.Register(trans)
 	rpc.HandleHTTP()
 	fmt.Println("hsync server listen at ", server.conf.Addr)
 	l, err := net.Listen("tcp", server.conf.Addr)
@@ -50,9 +56,9 @@ func (server *HsyncServer) Start() {
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		glog.Infoln("direct visit", r.RemoteAddr, r.Method, r.UserAgent(), r.Referer())
-		w.Write([]byte("hsyncd is ready (v" + GetVersion() + ")"))
+		_, _ = w.Write([]byte("hsyncd is ready (v" + GetVersion() + ")"))
 	})
-	http.Serve(l, nil)
+	_ = http.Serve(l, nil)
 }
 
 func (server *HsyncServer) DeployAll() {
@@ -65,7 +71,7 @@ func (server *HsyncServer) DeployAll() {
 
 func (server *HsyncServer) deploy(dst, src string) {
 	var err error
-	os.Chdir(server.conf.Home)
+	_ = os.Chdir(server.conf.Home)
 	err = copyFile(dst, src)
 	pwd, _ := os.Getwd()
 	glog.Infof("deploy Copy [%s]->[%s],err=%v,pwd=%s", src, dst, err, pwd)

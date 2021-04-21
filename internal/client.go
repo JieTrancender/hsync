@@ -155,7 +155,7 @@ checkConnect:
 	if err != nil {
 		glog.Warningln("\n==============================================================")
 		glog.Warningln("Call", method, "failed,", err)
-		glog.Warningln("==============================================================\n")
+		glog.Warningln("================================================================")
 	} else {
 		timeout.Stop()
 	}
@@ -164,7 +164,7 @@ checkConnect:
 
 func (hc *HsyncClient) RemoteVersion() string {
 	var serverVersion string
-	hc.Call("Trans.Version", version, &serverVersion)
+	_ = hc.Call("Trans.Version", version, &serverVersion)
 	glog.Infoln("remote server version is", serverVersion)
 	return serverVersion
 }
@@ -262,7 +262,7 @@ func (hc *HsyncClient) RemoteDel(name string) error {
 	if reply == 1 {
 		glog.Info(relPath, " Delete suc")
 	} else {
-		glog.Infof("Delete [%s] failed,err=", relPath, err)
+		glog.Infof("Delete [%s] failed, err: %s", relPath, err)
 	}
 	return err
 }
@@ -379,7 +379,7 @@ func (hc *HsyncClient) Watch() (err error) {
 			}
 		}
 	}()
-	hc.watcher.Add(hc.conf.Home)
+	_ = hc.watcher.Add(hc.conf.Home)
 	hc.addWatch(hc.conf.Home)
 
 	hc.sync()
@@ -389,7 +389,7 @@ func (hc *HsyncClient) Watch() (err error) {
 }
 
 func (hc *HsyncClient) addWatch(dir string) {
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(dir, func(path string, info os.FileInfo, errArg error) error {
 		absPath, relPath, _ := hc.CheckPath(path)
 		//only need watch dir
 		if !info.IsDir() {
@@ -402,7 +402,7 @@ func (hc *HsyncClient) addWatch(dir string) {
 			}
 			return nil
 		}
-		err = hc.watcher.Add(absPath)
+		err := hc.watcher.Add(absPath)
 		glog.Infoln("add watch,path=[", relPath, "]", err)
 		return err
 	})
@@ -447,7 +447,7 @@ func (hc *HsyncClient) eventLoop() {
 		var wg sync.WaitGroup
 		for _, ev := range elist {
 			cacheKey := ev.AsKey()
-			if t, has := eventCache[cacheKey]; has && time.Now().Sub(t).Seconds() < 5 {
+			if t, has := eventCache[cacheKey]; has && time.Since(t).Seconds() < 5 {
 				glog.V(2).Infoln("same event in loop,skip", cacheKey)
 				continue
 			}
@@ -455,7 +455,7 @@ func (hc *HsyncClient) eventLoop() {
 
 			switch ev.EventType {
 			case EVENT_UPDATE:
-				hc.RemoteSaveFile(ev.Name)
+				_ = hc.RemoteSaveFile(ev.Name)
 			case EVENT_CHECK:
 
 				//hc.CheckOrSend(ev.Name)
@@ -463,14 +463,14 @@ func (hc *HsyncClient) eventLoop() {
 				wg.Add(1)
 				checkChan <- true
 				go (func(name string) {
-					hc.CheckOrSend(name)
+					_ = hc.CheckOrSend(name)
 					<-checkChan
 					wg.Done()
 				})(ev.Name)
 			case EVENT_DELETE:
-				hc.RemoteDel(ev.Name)
+				_ = hc.RemoteDel(ev.Name)
 			case EVENT_RENAME:
-				hc.RemoteReName(ev.Name, ev.NameTo)
+				_ = hc.RemoteReName(ev.Name, ev.NameTo)
 			default:
 				glog.Warningln("unknown event:", ev)
 			}
@@ -480,12 +480,9 @@ func (hc *HsyncClient) eventLoop() {
 
 	ticker := time.NewTicker(1 * time.Second)
 	for {
-		select {
-		case <-ticker.C:
-			eventHandler()
-		}
+		<-ticker.C
+		eventHandler()
 	}
-	glog.Error("sync loop exit")
 }
 
 func (hc *HsyncClient) sync() {
@@ -529,7 +526,7 @@ func (hc *HsyncClient) eventHandler(event fsnotify.Event) {
 		if hc.reNameEvent != nil {
 			absPathOld, relNameOld, _ := hc.CheckPath(hc.reNameEvent.Name)
 			hc.reNameEvent = nil
-			hc.watcher.Remove(absPathOld)
+			_ = hc.watcher.Remove(absPathOld)
 			glog.V(2).Infoln("event rename", relNameOld, "->", relName)
 
 			hc.addEvent(absPath, EVENT_RENAME, absPathOld)
@@ -559,26 +556,26 @@ func (hc *HsyncClient) eventHandler(event fsnotify.Event) {
 
 	if event.Op&fsnotify.Remove == fsnotify.Remove {
 		hc.addEvent(absPath, EVENT_DELETE, "")
-		hc.watcher.Remove(absPath)
+		_ = hc.watcher.Remove(absPath)
 	}
 
 	//now not support rename
 	if event.Op&fsnotify.Rename == fsnotify.Rename {
 		//		hc.reNameEvent = &event
 		hc.addEvent(absPath, EVENT_DELETE, "")
-		hc.watcher.Remove(absPath)
+		_ = hc.watcher.Remove(absPath)
 	}
 }
 
-func (hc *HsyncClient) handlerChange(name string) error {
-	hc.RemoteSaveFile(name)
-	info, err := os.Stat(name)
-	if err == nil && info.IsDir() {
-		hc.addWatch(name)
-	}
+// func (hc *HsyncClient) handlerChange(name string) error {
+// 	_ = hc.RemoteSaveFile(name)
+// 	info, err := os.Stat(name)
+// 	if err == nil && info.IsDir() {
+// 		hc.addWatch(name)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 var _defaultIgnores = map[string]int{
 	"hsync.json":  1,

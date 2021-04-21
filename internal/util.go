@@ -28,7 +28,7 @@ func StrMd5(mystr string) string {
 
 func ByteMd5(data []byte) string {
 	h := md5.New()
-	h.Write(data)
+	_, _ = h.Write(data)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -39,7 +39,7 @@ func FileMd5(name string) string {
 	}
 	defer f.Close()
 	h := md5.New()
-	io.Copy(h, f)
+	_, _ = io.Copy(h, f)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -49,7 +49,7 @@ func RpcDialHTTPPath(network, address, path string, timeout time.Duration) (*rpc
 	if err != nil {
 		return nil, err
 	}
-	io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
+	_, _ = io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
 
 	// Require successful HTTP response
 	// before switching to RPC protocol.
@@ -115,6 +115,9 @@ func copyFile(dest, src string) (err error) {
 			}
 			return nil
 		})
+		if err != nil {
+			return err
+		}
 	} else {
 		_, err = os.Stat(filepath.Dir(src))
 		if err != nil {
@@ -135,8 +138,15 @@ func copyFile(dest, src string) (err error) {
 		defer _copyrw.Unlock()
 		var d *os.File
 		d, err = os.OpenFile(dest, os.O_RDWR|os.O_CREATE, info.Mode())
-		defer d.Close()
-		d.Truncate(0)
+		defer func() {
+			_ = d.Close()
+		}()
+
+		err = d.Truncate(0)
+		if err != nil {
+			return err
+		}
+
 		_, err = io.Copy(d, f)
 	}
 	return err
@@ -145,7 +155,7 @@ func copyFile(dest, src string) (err error) {
 func dataGzipEncode(data []byte) (out []byte) {
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
-	gw.Write(data)
+	_, _ = gw.Write(data)
 	gw.Flush()
 	gw.Close()
 	return buf.Bytes()

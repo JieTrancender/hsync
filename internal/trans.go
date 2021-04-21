@@ -172,7 +172,7 @@ func (trans *Trans) CopyFile(arg *RpcArgs, result *int) error {
 		}
 		if !myFile.Stat.IsDir() && info != nil && info.IsDir() {
 			err = os.RemoveAll(fullName)
-			glog.Infoln("trans.CopyFile | removeAll (%s) exists and not dir,because source is dir,err=", err)
+			glog.Infof("trans.CopyFile | removeAll (%s) exists and not dir, because source is dir, err: %v", fullName, err)
 			if err != nil {
 				return err
 			}
@@ -278,7 +278,7 @@ func (trans *Trans) eventLoop() {
 					trans.server.deploy(to, relName)
 				}
 			} else if et == EVENT_DELETE {
-
+				glog.Infof("trigger delete event on %s", relName)
 			}
 		}
 	}
@@ -304,12 +304,9 @@ func (trans *Trans) eventLoop() {
 
 	ticker := time.NewTicker(1 * time.Second)
 	for {
-		select {
-		case <-ticker.C:
-			eventHandler()
-		}
+		<-ticker.C
+		eventHandler()
 	}
-	glog.Error("trans.eventLoop exit")
 }
 
 func fileGetStat(name string, stat *FileStat, md5 bool) error {
