@@ -27,3 +27,8 @@ example/*
 hsync_*
 tmp
 coverage.txt
+
+hsync
+conf/*
+restart.sh
+x7_hsync.json
