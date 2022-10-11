@@ -67,12 +67,15 @@ fi
 
 ```
 {
-    "server":"127.0.0.1:8700",
+    "hosts":{
+        "server": {
+            "host":"127.0.0.1:8700",
+            "token":"abc"
+        }
+    },
     "home":"./",
-    "token":"abc",
-    "ignore":[
-        "*.exe",
-        "log/*"
+    "ignore": [
+        "./log"
     ]
 }
 ```
